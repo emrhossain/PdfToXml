@@ -8,7 +8,7 @@ using PdfToXml.Data;
 
 #nullable disable
 
-namespace PdfToXml.Data.Migrations
+namespace PdfToXml.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     partial class ApplicationDbContextModelSnapshot : ModelSnapshot
@@ -157,6 +157,50 @@ namespace PdfToXml.Data.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("PdfToXml.Data.Files", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<byte[]>("File1")
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("File1Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("File2")
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("File2Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("PdfFile")
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("PdfFileName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UploadTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("XmlFile")
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("XmlFileName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Files");
                 });
 
             modelBuilder.Entity("PdfToXml.Data.User", b =>

@@ -9,5 +9,6 @@ namespace PdfToXml.Data
             : base(options)
         {
         }
+        public DbSet<Files> Files { get; set; }
     }
 }
