@@ -1,0 +1,312 @@
+﻿@page "/file"
+@using PdfToXml.Data;
+@using Microsoft.AspNetCore.Http;
+@using System.Security.Claims;
+@using iText.Kernel.Geom;
+@using iText.Kernel.Pdf;
+@using iText.Kernel.Pdf.Canvas.Parser;
+@using iText.Kernel.Pdf.Canvas.Parser.Data;
+@using iText.Kernel.Pdf.Canvas.Parser.Listener;
+@using iText.Layout.Element;
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject PdfToXml.Services.IUploadedFilesService UploadedFilesService
+
+<AuthorizeView>
+    <Authorized>
+
+        <h3>File</h3>
+        <p>Only PDF and max 2 MB</p>
+        <div class="form-group">
+            <InputFile OnChange="@LoadPDFFile" />
+            <button class="btn btn-primary" @onclick="UploadPdfFile">Upload</button>
+        </div>
+
+
+        @if (uploadedPdf)
+        {
+            <p>PDF uploaded <a @onclick="ShowPdfFile">@pdfName</a></p>
+            <div class="form-group">
+                <InputFile OnChange="@LoadFile1" />
+                <button class="btn btn-primary" @onclick="() => UploadOtherFile(1)">Upload</button>
+            </div>
+            @if (uploadedFile1)
+            {
+                <p>File1 uploaded <a @onclick="()=>ShowOtherFile(1)">@file1Name</a></p>
+            }
+            <div class="form-group">
+                <InputFile OnChange="@LoadFile2" />
+                <button class="btn btn-primary" @onclick="() => UploadOtherFile(2)">Upload</button>
+            </div>
+            @if (uploadedFile2)
+            {
+                <p>File1 uploaded <a @onclick="()=>ShowOtherFile(2)">@file2Name</a></p>
+            }
+            <button class="btn btn-primary" @onclick="Extruct">Extruct</button>
+
+            @if (extracted)
+            {
+                <table>
+                    <tr>
+                        <th>name</th>
+                        <th>type</th>
+                    </tr>
+                    foreach (string person in persons)
+                    {
+                    <tr>
+                        <td class="person">@persons</td>
+                        <td>
+                            <InputSelect TValue="string">
+                                <option value="friendly">friendly</option>
+                                <option value="tall">tall</option>
+                                <option value="neutral">neutral</option>
+                            </InputSelect>
+                        </td>
+                    </tr>
+                    }
+                </table>
+            }
+        }
+        @foreach (string error in errors)
+        {
+            <li>@error</li>
+        }
+
+    </Authorized>
+    <NotAuthorized>
+        <p>Sorry, you are not authorized to view this content</p>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private int entryId;
+    private bool uploadedPdf = false;
+    private string pdfName = "";
+    private bool uploadedFile1 = false;
+    private string file1Name = "";
+    private bool uploadedFile2 = false;
+    private string file2Name = "";
+    private List<string> errors = new List<string>();
+    private bool maximumExceed = false;
+    private IBrowserFile selectedPdfFile = null;
+    private IBrowserFile selectedOtherFile1 = null;
+    private IBrowserFile selectedOtherFile2 = null;
+    private long maxFileSize = 1024 * 1024 * 2;
+
+    private bool extracted = false;
+    public List<string> persons = new List<string>();
+    private byte[] _pdfFile;
+
+
+    private void LoadPDFFile(InputFileChangeEventArgs e)
+    {
+        errors.Clear();
+        selectedPdfFile = e.File;
+        if (selectedPdfFile == null) errors.Add("No file selected");
+        if (selectedPdfFile.ContentType != "application/pdf") errors.Add("Please select a PDF file");
+        maximumExceed = selectedPdfFile.Size > maxFileSize;
+        if (maximumExceed) errors.Add("Maximum filesize exceeded");
+        this.StateHasChanged();
+    }
+    private async Task UploadPdfFile()
+    {
+        try
+        {
+            if (uploadedPdf)
+            {
+                errors.Add("Pdf already uploaded");
+            }
+            else if (errors.Count == 0)
+            {
+                using var memoryStream = new MemoryStream();
+                var stream = selectedPdfFile.OpenReadStream(maxFileSize);
+                await stream.CopyToAsync(memoryStream);
+                var fileUpload = new UploadedFiles
+                    {
+                        PdfFileName = selectedPdfFile.Name,
+                        PdfFile = memoryStream.ToArray(),
+                        UserId = AuthenticationStateProvider.GetAuthenticationStateAsync().Result.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                    };
+                int insertedId = await UploadedFilesService.UploadPdfFile(fileUpload);
+                uploadedPdf = insertedId > 0;
+                entryId = insertedId;
+            }
+            this.StateHasChanged();
+            return;
+        }
+        catch (Exception ex)
+        {
+            errors.Add("Something wrong. " + ex.Message);
+        }
+
+    }
+
+    private void LoadFile1(InputFileChangeEventArgs e)
+    {
+        errors.Clear();
+        selectedOtherFile1 = e.File;
+        if (selectedOtherFile1 == null) errors.Add("No file selected");
+        maximumExceed = selectedOtherFile1.Size > maxFileSize;
+        if (maximumExceed) errors.Add("Maximum filesize exceeded");
+        this.StateHasChanged();
+    }
+    private void LoadFile2(InputFileChangeEventArgs e)
+    {
+        errors.Clear();
+        selectedOtherFile2 = e.File;
+        if (selectedOtherFile2 == null) errors.Add("No file selected");
+        maximumExceed = selectedOtherFile2.Size > maxFileSize;
+        if (maximumExceed) errors.Add("Maximum filesize exceeded");
+        this.StateHasChanged();
+    }
+    private async Task UploadOtherFile(int fileSerial)
+    {
+        try
+        {
+            if (fileSerial == 1 && uploadedFile1)
+            {
+                errors.Add("File1 already uploaded");
+            }
+            else if (fileSerial == 2 && uploadedFile2)
+            {
+                errors.Add("File2 already uploaded");
+            }
+            else if (errors.Count == 0)
+            {
+                IBrowserFile file = fileSerial == 1 ? selectedOtherFile1 : selectedOtherFile2;
+                using var memoryStream = new MemoryStream();
+                var stream = file.OpenReadStream(maxFileSize);
+                await stream.CopyToAsync(memoryStream);
+                var fileUpload = new UploadedFiles
+                    {
+                        Id = entryId,
+                        File1Name = fileSerial == 1 ? file.Name : null,
+                        File1 = fileSerial == 1 ? memoryStream.ToArray() : null,
+                        File2Name = fileSerial == 2 ? file.Name : null,
+                        File2 = fileSerial == 2 ? memoryStream.ToArray() : null
+                    };
+                int inserted = await UploadedFilesService.UploadOtherFiles(fileUpload, fileSerial);
+                if (fileSerial == 1)
+                {
+                    uploadedFile1 = inserted > 0;
+                    file1Name = file.Name;
+                }
+                else
+                {
+                    uploadedFile2 = inserted > 0;
+                    file2Name = file.Name;
+                }
+            }
+            else
+            {
+                if (fileSerial == 1)
+                {
+                    uploadedFile1 = false;
+                }
+                else
+                {
+                    uploadedFile2 = false;
+                }
+            }
+            this.StateHasChanged();
+            return;
+        }
+        catch (Exception ex)
+        {
+            errors.Add("Something wrong. " + ex.Message);
+        }
+    }
+
+    private async Task ShowPdfFile()
+    {
+        return;
+    }
+
+    private async Task ShowOtherFile(int fileSerial)
+    {
+        return;
+    }
+
+    private async Task Extruct()
+    {
+        _pdfFile = await UploadedFilesService.GetUploadedPdfById(entryId);
+        MemoryStream stream = new MemoryStream(_pdfFile);
+
+        using (PdfReader pdfReader = new PdfReader(stream))
+        {
+            using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
+            {
+                //PdfTextExtractor pdfTextExtractor = new PdfTextExtractor(pdfDocument);
+
+                for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
+                {
+                    PdfPage page = pdfDocument.GetPage(i);
+                    //ITextExtractionStrategy strategy = new SimpleTextExtractionStrategy();
+                    ITextExtractionStrategy extractionStrategy = new CustomTextExtractionStrategy();
+                    PdfCanvasProcessor parser = new PdfCanvasProcessor(extractionStrategy);
+                    parser.ProcessPageContent(page);
+                    IList<TextRenderInfo> textInfos = extractionStrategy.GetResultantTextRenderInfos();
+                    
+                    foreach (TextRenderInfo textInfo in textInfos)
+                    {
+                        string text = textInfo.GetText();
+                        if (text.Length < 20 && textInfo.GetBaseline().GetStartPoint().Get(0) < page.GetPageSize().GetWidth() / 2 && textInfo.GetBaseline().GetStartPoint().Get(0) > 50)
+                        {
+                            //float startX = textInfo.GetBaseline().GetStartPoint().Get(0);
+                            //float startY = textInfo.GetBaseline().GetStartPoint().Get(1);
+                            //Console.WriteLine("Starting position of the text \"{0}\": ({1}, {2})", text, startX, startY);
+                            persons.Add(text);
+                        }
+                    }
+
+                    //string pageText = PdfTextExtractor.GetTextFromPage(page);
+
+                    //string[] lineTexts = pageText.Split('\n');
+                    //foreach (string lineText in lineTexts)
+                    //{
+
+                    //    float lineWidth = lineText.Length;
+                    //    float pageWidth = page.GetPageSize().GetWidth();
+                    //    if ((pageWidth / 2 - lineWidth * 10) > 20)
+                    //    {
+                    //        //persons.Add(new CenterAlignedLine() { Page = page, Text = lineText });
+                    //        persons.Add(lineText);
+                    //    }
+                    //}
+                }
+                extracted = true;
+            }
+        }
+        this.StateHasChanged();
+    }
+
+
+
+    public class CustomTextExtractionStrategy : ITextExtractionStrategy
+    {
+        public string GetResultantText()
+        {
+            return null;
+        }
+
+        public void EventOccurred(IEventData iEventData, EventType eventType)
+        {
+            if (eventType.Equals(EventType.RENDER_TEXT))
+            {
+                TextRenderInfo renderInfo = (TextRenderInfo)iEventData;
+                //String text = renderInfo.GetText();
+
+                //Vector curBaseline = renderInfo.GetBaseline().GetStartPoint();
+                //Vector topRight = renderInfo.GetAscentLine().GetEndPoint();
+
+                //Rectangle rect = new Rectangle(curBaseline.Get(0), curBaseline.Get(1), topRight.Get(0), topRight.Get(1));
+                //float curFontSize = rect.GetHeight();
+                //System.out.println("Text: " + text + " FontSize: " + curFontSize);
+            }
+        }
+
+        public ICollection<EventType> GetSupportedEvents()
+        {
+            return null;
+        }
+    }
+}

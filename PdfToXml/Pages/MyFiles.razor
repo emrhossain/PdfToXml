@@ -1,0 +1,54 @@
+﻿@page "/myfiles"
+@using PdfToXml.Data;
+@using System.Security.Claims;
+@inject PdfToXml.Services.IUploadedFilesService UploadedFilesService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+
+<AuthorizeView>
+    <Authorized>
+        <h3>My Files</h3>
+
+        @if (myfiles == null)
+        {
+            <p><em>Loading..</em></p>
+        }
+        else
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>PDF</th>
+                        <th>XML</th>
+                        <th>File 1</th>
+                        <th>File 2</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var file in myfiles)
+                    {
+                        <tr>
+                            <td>@file.PdfFileName</td>
+                            <td>@file.XmlFileName</td>
+                            <td>@file.File1Name</td>
+                            <td>@file.File2Name</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+    </Authorized>
+    <NotAuthorized>
+        <p>Sorry, you are not authorized to view this content</p>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private List<UploadedFiles>? myfiles;
+
+    protected override async Task OnInitializedAsync()
+    {
+        myfiles = await UploadedFilesService.GetUploadedFilesForUser(AuthenticationStateProvider.GetAuthenticationStateAsync().Result.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+    }
+}

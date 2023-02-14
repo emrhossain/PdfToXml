@@ -1,0 +1,43 @@
+﻿@page "/public"
+@using PdfToXml.Data;
+@inject PdfToXml.Services.IUploadedFilesService UploadedFilesService
+
+<h3>Public</h3>
+@if (files == null)
+{
+    <p><em>Loading..</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>PDF</th>
+                <th>XML</th>
+                <th>File 1</th>
+                <th>File 2</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var file in files)
+            {
+                <tr>
+                    <td>@file.User.Name</td>
+                    <td>@file.PdfFileName</td>
+                    <td>@file.XmlFileName</td>
+                    <td>@file.File1Name</td>
+                    <td>@file.File2Name</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+@code {
+    private List<UploadedFiles>? files;
+
+    protected override async Task OnInitializedAsync()
+    {
+        files = await UploadedFilesService.GetUploadedFiles();
+    }
+}
