@@ -243,7 +243,7 @@
                 float pageHeight = pdfDocument.GetPage(1).GetPageSize().GetHeight();
                 Rectangle rect = new Rectangle(pageWidth/2 - 50, 50, 100, pageHeight-100);
                 TextRegionEventFilter regionFilter = new TextRegionEventFilter(rect);
-                StringBuilder builder = new StringBuilder();
+                //StringBuilder builder = new StringBuilder();
 
                 for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
                 {
@@ -254,10 +254,10 @@
                     //builder.Append(str);
                     string[] lineAllTexts = pageAllText.Split('\n');
                     string[] lineTexts = pageFilteredText.Split('\n');
-                    for (int j = 0; j< lineTexts.Length; i++)
+                    for (int j = 0; j < lineTexts.Length; j++)
                     {
                         float lineWidth = lineTexts[j].Length;
-                        if (lineAllTexts[j].Length < 10 && !persons.Contains(lineTexts[j]))
+                        if (lineAllTexts[j].Length < 10 && lineTexts[j].Length < 10 && !persons.Contains(lineTexts[j]))
                         {
                             //persons.Add(new CenterAlignedLine() { Page = page, Text = lineText });
                             persons.Add(lineTexts[j]);
