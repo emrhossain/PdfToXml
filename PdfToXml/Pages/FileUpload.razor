@@ -2,10 +2,12 @@
 @using PdfToXml.Data;
 @using Microsoft.AspNetCore.Http;
 @using System.Security.Claims;
+@using System.Text;
 @using iText.Kernel.Geom;
 @using iText.Kernel.Pdf;
 @using iText.Kernel.Pdf.Canvas.Parser;
 @using iText.Kernel.Pdf.Canvas.Parser.Data;
+@using iText.Kernel.Pdf.Canvas.Parser.Filter;
 @using iText.Kernel.Pdf.Canvas.Parser.Listener;
 @using iText.Layout.Element;
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -237,26 +239,53 @@
             {
                 //PdfTextExtractor pdfTextExtractor = new PdfTextExtractor(pdfDocument);
 
+                float pageWidth = pdfDocument.GetPage(1).GetPageSize().GetWidth();
+                float pageHeight = pdfDocument.GetPage(1).GetPageSize().GetHeight();
+                Rectangle rect = new Rectangle(pageWidth/2 - 50, 50, 100, pageHeight-100);
+                TextRegionEventFilter regionFilter = new TextRegionEventFilter(rect);
+                StringBuilder builder = new StringBuilder();
+
                 for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
                 {
                     PdfPage page = pdfDocument.GetPage(i);
-                    //ITextExtractionStrategy strategy = new SimpleTextExtractionStrategy();
-                    ITextExtractionStrategy extractionStrategy = new CustomTextExtractionStrategy();
-                    PdfCanvasProcessor parser = new PdfCanvasProcessor(extractionStrategy);
-                    parser.ProcessPageContent(page);
-                    IList<TextRenderInfo> textInfos = extractionStrategy.GetResultantTextRenderInfos();
-                    
-                    foreach (TextRenderInfo textInfo in textInfos)
+                    ITextExtractionStrategy strat = new FilteredTextEventListener(new LocationTextExtractionStrategy(), regionFilter);
+                    string pageAllText = PdfTextExtractor.GetTextFromPage(page);
+                    string pageFilteredText = PdfTextExtractor.GetTextFromPage(page, strat);
+                    //builder.Append(str);
+                    string[] lineAllTexts = pageAllText.Split('\n');
+                    string[] lineTexts = pageFilteredText.Split('\n');
+                    for (int j = 0; j< lineTexts.Length; i++)
                     {
-                        string text = textInfo.GetText();
-                        if (text.Length < 20 && textInfo.GetBaseline().GetStartPoint().Get(0) < page.GetPageSize().GetWidth() / 2 && textInfo.GetBaseline().GetStartPoint().Get(0) > 50)
+                        float lineWidth = lineTexts[j].Length;
+                        if (lineAllTexts[j].Length < 10 && !persons.Contains(lineTexts[j]))
                         {
-                            //float startX = textInfo.GetBaseline().GetStartPoint().Get(0);
-                            //float startY = textInfo.GetBaseline().GetStartPoint().Get(1);
-                            //Console.WriteLine("Starting position of the text \"{0}\": ({1}, {2})", text, startX, startY);
-                            persons.Add(text);
+                            //persons.Add(new CenterAlignedLine() { Page = page, Text = lineText });
+                            persons.Add(lineTexts[j]);
                         }
                     }
+
+
+
+                    //PdfPage page = pdfDocument.GetPage(i);
+                    ////ITextExtractionStrategy strategy = new SimpleTextExtractionStrategy();
+                    //ITextExtractionStrategy extractionStrategy = new CustomTextExtractionStrategy();
+                    ////ITextExtractionStrategy locationExtractionStrategy = new LocationTextExtractionStrategy();
+
+                    //PdfCanvasProcessor parser = new PdfCanvasProcessor(extractionStrategy);
+                    //parser.ProcessPageContent(page);
+                    
+
+                    //foreach (TextRenderInfo textInfo in textInfos)
+                    //{
+                    //    string text = textInfo.GetText();
+                    //    if (text.Length < 20 && textInfo.GetBaseline().GetStartPoint().Get(0) < page.GetPageSize().GetWidth() / 2 && textInfo.GetBaseline().GetStartPoint().Get(0) > 50)
+                    //    {
+                    //        //float startX = textInfo.GetBaseline().GetStartPoint().Get(0);
+                    //        //float startY = textInfo.GetBaseline().GetStartPoint().Get(1);
+                    //        //Console.WriteLine("Starting position of the text \"{0}\": ({1}, {2})", text, startX, startY);
+                    //        persons.Add(text);
+                    //    }
+                    //}
 
                     //string pageText = PdfTextExtractor.GetTextFromPage(page);
 
@@ -297,6 +326,7 @@
 
                 //Vector curBaseline = renderInfo.GetBaseline().GetStartPoint();
                 //Vector topRight = renderInfo.GetAscentLine().GetEndPoint();
+                
 
                 //Rectangle rect = new Rectangle(curBaseline.Get(0), curBaseline.Get(1), topRight.Get(0), topRight.Get(1));
                 //float curFontSize = rect.GetHeight();
@@ -308,5 +338,6 @@
         {
             return null;
         }
+
     }
 }
