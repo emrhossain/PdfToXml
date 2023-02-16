@@ -1,8 +1,10 @@
 ﻿@page "/file"
+@using Microsoft.CodeAnalysis.Differencing;
 @using PdfToXml.Data;
 @using Microsoft.AspNetCore.Http;
 @using System.Security.Claims;
 @using System.Text;
+@using System.Text.RegularExpressions;
 @using iText.Kernel.Geom;
 @using iText.Kernel.Pdf;
 @using iText.Kernel.Pdf.Canvas.Parser;
@@ -52,16 +54,16 @@
                         <th>name</th>
                         <th>type</th>
                     </tr>
-                    foreach (string person in persons)
+                    @foreach (string person in persons)
                     {
                     <tr>
-                        <td class="person">@persons</td>
+                        <td class="person">@person</td>
                         <td>
-                            <InputSelect TValue="string">
+                            <select class="select">
                                 <option value="friendly">friendly</option>
                                 <option value="tall">tall</option>
                                 <option value="neutral">neutral</option>
-                            </InputSelect>
+                            </select>
                         </td>
                     </tr>
                     }
@@ -241,26 +243,33 @@
 
                 float pageWidth = pdfDocument.GetPage(1).GetPageSize().GetWidth();
                 float pageHeight = pdfDocument.GetPage(1).GetPageSize().GetHeight();
-                Rectangle rect = new Rectangle(pageWidth/2 - 50, 50, 100, pageHeight-100);
+                Rectangle rectFull = new Rectangle(0, 50, pageWidth, pageHeight - 150);
+                Rectangle rect = new Rectangle(pageWidth / 2 - 50, 50, 40, pageHeight - 150);
+                TextRegionEventFilter fullFilter = new TextRegionEventFilter(rectFull);
                 TextRegionEventFilter regionFilter = new TextRegionEventFilter(rect);
-                //StringBuilder builder = new StringBuilder();
 
                 for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
                 {
                     PdfPage page = pdfDocument.GetPage(i);
+                    ITextExtractionStrategy fullStrat = new FilteredTextEventListener(new LocationTextExtractionStrategy(), fullFilter);
                     ITextExtractionStrategy strat = new FilteredTextEventListener(new LocationTextExtractionStrategy(), regionFilter);
-                    string pageAllText = PdfTextExtractor.GetTextFromPage(page);
+                    string pageAllText = PdfTextExtractor.GetTextFromPage(page, fullStrat);
                     string pageFilteredText = PdfTextExtractor.GetTextFromPage(page, strat);
+                    //string result = string.Concat(pageFilteredText.Where(c => char.IsUpper(c)));
                     //builder.Append(str);
                     string[] lineAllTexts = pageAllText.Split('\n');
                     string[] lineTexts = pageFilteredText.Split('\n');
+
                     for (int j = 0; j < lineTexts.Length; j++)
                     {
-                        float lineWidth = lineTexts[j].Length;
-                        if (lineAllTexts[j].Length < 10 && lineTexts[j].Length < 10 && !persons.Contains(lineTexts[j]))
+                        string[] texts = lineTexts[j].Split(' ').Where(w => w == w.ToUpper()).ToArray<string>();
+                        if (texts.Length == 0) continue;
+                        string text = texts[0];
+                        float lineWidth = text.Length;
+                        if (lineTexts[j].Length < 12 && text.Length < 10 && text.Length > 2 && text.All(Char.IsLetter) && !persons.Contains(text))
                         {
                             //persons.Add(new CenterAlignedLine() { Page = page, Text = lineText });
-                            persons.Add(lineTexts[j]);
+                            persons.Add(text);
                         }
                     }
 
@@ -273,7 +282,7 @@
 
                     //PdfCanvasProcessor parser = new PdfCanvasProcessor(extractionStrategy);
                     //parser.ProcessPageContent(page);
-                    
+
 
                     //foreach (TextRenderInfo textInfo in textInfos)
                     //{
@@ -326,7 +335,7 @@
 
                 //Vector curBaseline = renderInfo.GetBaseline().GetStartPoint();
                 //Vector topRight = renderInfo.GetAscentLine().GetEndPoint();
-                
+
 
                 //Rectangle rect = new Rectangle(curBaseline.Get(0), curBaseline.Get(1), topRight.Get(0), topRight.Get(1));
                 //float curFontSize = rect.GetHeight();
