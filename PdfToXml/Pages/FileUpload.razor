@@ -251,27 +251,6 @@
 
                 for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
                 {
-                    //PdfPage page = pdfDocument.GetPage(i);
-                    //FilteredEventListener listener = new FilteredEventListener();
-                    //var strat = listener.AttachEventListener(new TextLocationStrategy());
-                    //PdfCanvasProcessor processor = new PdfCanvasProcessor(listener);
-                    //processor.ProcessPageContent(page);
-                    //string pageAllText = PdfTextExtractor.GetTextFromPage(page, strat);
-
-                    //foreach (textChunk character in strat.objectResult)
-                    //{
-                    //    if (character.rect.GetLeft() >= page.GetPageSize().GetWidth() / 2 - 50)
-                    //    {
-                    //        persons.Add(character.text);
-                    //    }
-                    //}
-
-                    //foreach (TextRenderInfo info in strat.renInfos)
-                    //{
-                        
-                    //    persons.Add(info.GetText() + " start:" + info.GetBaseline().GetStartPoint().Get(0) + " end:" + info.GetBaseline().GetEndPoint().Get(0));
-                    //}
-
 
                     PdfPage page = pdfDocument.GetPage(i);
                     ITextExtractionStrategy fullStrat = new FilteredTextEventListener(new LocationTextExtractionStrategy(), fullFilter);
@@ -290,47 +269,10 @@
                         float lineWidth = text.Length;
                         if (lineTexts[j].Length < 12 && text.Length < 10 && text.Length > 2 && text.All(Char.IsLetter) && !persons.Contains(text))
                         {
-                            //persons.Add(new CenterAlignedLine() { Page = page, Text = lineText });
                             persons.Add(text);
                         }
                     }
 
-
-                    //PdfPage page = pdfDocument.GetPage(i);
-                    ////ITextExtractionStrategy strategy = new SimpleTextExtractionStrategy();
-                    //ITextExtractionStrategy extractionStrategy = new CustomTextExtractionStrategy();
-                    ////ITextExtractionStrategy locationExtractionStrategy = new LocationTextExtractionStrategy();
-
-                    //PdfCanvasProcessor parser = new PdfCanvasProcessor(extractionStrategy);
-                    //parser.ProcessPageContent(page);
-
-
-                    //foreach (TextRenderInfo textInfo in textInfos)
-                    //{
-                    //    string text = textInfo.GetText();
-                    //    if (text.Length < 20 && textInfo.GetBaseline().GetStartPoint().Get(0) < page.GetPageSize().GetWidth() / 2 && textInfo.GetBaseline().GetStartPoint().Get(0) > 50)
-                    //    {
-                    //        //float startX = textInfo.GetBaseline().GetStartPoint().Get(0);
-                    //        //float startY = textInfo.GetBaseline().GetStartPoint().Get(1);
-                    //        //Console.WriteLine("Starting position of the text \"{0}\": ({1}, {2})", text, startX, startY);
-                    //        persons.Add(text);
-                    //    }
-                    //}
-
-                    //string pageText = PdfTextExtractor.GetTextFromPage(page);
-
-                    //string[] lineTexts = pageText.Split('\n');
-                    //foreach (string lineText in lineTexts)
-                    //{
-
-                    //    float lineWidth = lineText.Length;
-                    //    float pageWidth = page.GetPageSize().GetWidth();
-                    //    if ((pageWidth / 2 - lineWidth * 10) > 20)
-                    //    {
-                    //        //persons.Add(new CenterAlignedLine() { Page = page, Text = lineText });
-                    //        persons.Add(lineText);
-                    //    }
-                    //}
                 }
                 extracted = true;
             }
@@ -345,11 +287,6 @@
         public List<textChunk> objectResult = new List<textChunk>();
         public IList<TextRenderInfo> renInfos;
 
-        //private readonly List<TextRect> _textRects = new List<TextRect>();
-
-        //public List<TextRect> TextRects() => _textRects;
-
-
         public override void EventOccurred(IEventData data, EventType type)
         {
             if (!type.Equals(EventType.RENDER_TEXT))
@@ -361,8 +298,6 @@
 
             float curFontSize = renderInfo.GetFontSize();
             
-
-            //IList<TextRenderInfo> text = renderInfo.GetCharacterRenderInfos();
             renInfos = renderInfo.GetCharacterRenderInfos();
 
             foreach (TextRenderInfo t in renInfos)
@@ -384,28 +319,9 @@
                     objectResult.Add(chunk);
                 }
             }
-            //foreach (var t in renInfos)
-            //{
-            //    if (string.IsNullOrWhiteSpace(t.GetText()))
-            //        continue;
-
-            //    AddTextRect(t);
-            //}
+            
         }
-        //private void AddTextRect(TextRenderInfo t)
-        //{
-        //    var letterStart = t.GetBaseline().GetStartPoint();
-        //    var letterEnd = t.GetAscentLine().GetEndPoint();
-
-        //    var newTextRect = new TextRect(
-        //        text: t.GetText(),
-        //        l: letterStart.Get(0),
-        //        r: letterEnd.Get(0),
-        //        t: letterEnd.Get(1),
-        //        b: letterStart.Get(1));
-
-        //    _textRects.Add(newTextRect);
-        //}
+        
     }
     public class textChunk
     {
