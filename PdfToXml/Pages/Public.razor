@@ -1,43 +1,92 @@
 ﻿@page "/public"
 @using PdfToXml.Data;
 @inject PdfToXml.Services.IUploadedFilesService UploadedFilesService
+@inject PdfToXml.Services.IUserService userService
+@inject IJSRuntime jsRunTime
 
 <h3>Public</h3>
-@if (files == null)
-{
-    <p><em>Loading..</em></p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>User</th>
-                <th>PDF</th>
-                <th>XML</th>
-                <th>File 1</th>
-                <th>File 2</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var file in files)
-            {
+<div class="row">
+<div class="col-md-8">
+    @if (files == null)
+    {
+        <p><em>Loading..</em></p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
                 <tr>
-                    <td>@file.User.Name</td>
-                    <td>@file.PdfFileName</td>
-                    <td>@file.XmlFileName</td>
-                    <td>@file.File1Name</td>
-                    <td>@file.File2Name</td>
+                    <th>User</th>
+                    <th>PDF</th>
+                    <th>XML</th>
+                    <th>File 1</th>
+                    <th>File 2</th>
                 </tr>
-            }
-        </tbody>
-    </table>
-}
+            </thead>
+            <tbody>
+                @foreach (var file in files)
+                {
+                    <tr>
+                        <td><span style="cursor:pointer" class="link-info" @onclick="() => ViewUserInfo(file.UserId)">@file.User?.Name</span></td>
+                            <td><span style="cursor:pointer" class="link-info" @onclick="() => DownloadPDF(file.Id, file.PdfFileName)">@file.PdfFileName</span></td>
+                        <td>@file.XmlFileName</td>
+                        <td>@file.File1Name</td>
+                        <td>@file.File2Name</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+<div class="col-md-4">
+    @if (about != string.Empty)
+    {
+        <div>About: @about</div>
+    }
+</div>
+</div>
 @code {
     private List<UploadedFiles>? files;
+
+    private string about = "";
 
     protected override async Task OnInitializedAsync()
     {
         files = await UploadedFilesService.GetUploadedFiles();
+    }
+
+    //private class User
+    //{
+    //    public User(string name, string about)
+    //    {
+    //        _name = name;
+    //        _about = about;
+    //    }
+
+    //    private string _name;
+    //    public string Name => _name;
+
+    //    private string _about;
+    //    public string About => _about;
+    //}
+
+    private async Task ViewUserInfo(string? userId)
+    {
+        about = "Hello";
+        var user = await userService.GetUserById(userId);
+        if(user != null)
+        {
+            about = user.About;
+        }
+    }
+
+    private async Task DownloadPDF(int fileId, string fileName)
+    {
+        byte[] _pdfFile = await UploadedFilesService.GetUploadedPdfById(fileId);
+
+        if (_pdfFile != null)
+        {
+            await jsRunTime.InvokeVoidAsync("DownloadPDF", fileName, _pdfFile);
+        }
     }
 }

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace PdfToXml.Migrations
 {
     /// <inheritdoc />
-    public partial class initial : Migration
+    public partial class initial22 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -50,28 +50,6 @@ namespace PdfToXml.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Files",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PdfFile = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
-                    PdfFileName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    XmlFile = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
-                    XmlFileName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    File1 = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
-                    File1Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    File2 = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
-                    File2Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UploadTime = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Files", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -180,6 +158,34 @@ namespace PdfToXml.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "UploadedFiles",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    PdfFile = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
+                    PdfFileName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    XmlFile = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
+                    XmlFileName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    File1 = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
+                    File1Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    File2 = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
+                    File2Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UploadTime = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UploadedFiles", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UploadedFiles_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -218,6 +224,11 @@ namespace PdfToXml.Migrations
                 column: "NormalizedUserName",
                 unique: true,
                 filter: "[NormalizedUserName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UploadedFiles_UserId",
+                table: "UploadedFiles",
+                column: "UserId");
         }
 
         /// <inheritdoc />
@@ -239,7 +250,7 @@ namespace PdfToXml.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Files");
+                name: "UploadedFiles");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

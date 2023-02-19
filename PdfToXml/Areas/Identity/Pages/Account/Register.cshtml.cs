@@ -71,15 +71,13 @@ namespace PdfToXml.Areas.Identity.Pages.Account
         /// </summary>
         public class InputModel
         {
-            [Required]
             [DataType(DataType.Text)]
             [Display(Name = "Name")]
-            public string Name { get; set; }
+            public string? Name { get; set; }
 
-            [Required]
             [DataType(DataType.Text)]
             [Display(Name = "About")]
-            public string About{ get; set; }
+            public string? About{ get; set; }
 
             /// <summary>
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -124,8 +122,8 @@ namespace PdfToXml.Areas.Identity.Pages.Account
             if (ModelState.IsValid)
             {
                 var user = CreateUser();
-                user.Name = Input.Name;
-                user.About = Input.About;
+                user.Name = "";// Input.Name;
+                user.About = "";// Input.About;
 
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);

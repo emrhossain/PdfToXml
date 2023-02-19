@@ -12,8 +12,8 @@ using PdfToXml.Data;
 namespace PdfToXml.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230209221543_updateDB")]
-    partial class updateDB
+    [Migration("20230219153258_initial_22")]
+    partial class initial22
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -193,7 +193,7 @@ namespace PdfToXml.Migrations
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<byte[]>("XmlFile")
                         .HasColumnType("varbinary(max)");
@@ -202,6 +202,8 @@ namespace PdfToXml.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("UploadedFiles");
                 });
@@ -330,6 +332,17 @@ namespace PdfToXml.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("PdfToXml.Data.UploadedFiles", b =>
+                {
+                    b.HasOne("PdfToXml.Data.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }
